@@ -1,35 +1,99 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  AppBar,
+  Container,
+  Stack,
+  Toolbar,
+  Typography,
+  TextField,
+  Button,
+} from "@mui/material";
+import { ChangeEvent, useEffect, useState } from "react";
+import TodoItem from "./components/TodoItem";
+import { getTodos, saveTodos } from "./utils/features";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [todos, setTodos] = useState<TodoItemType[]>(getTodos());
+
+
+  const [title, setTitle] = useState<TodoItemType["title"]>("");
+
+  const submitHandler = () => {
+    const newTodo = {
+      title,
+      isCompleted: false,
+      id: String(Math.ceil(Math.random() * 100)),
+    };
+    setTodos([...todos, newTodo]);
+    setTitle("");
+  };
+
+  const completeHandler = (id: TodoItemType["id"]) => {
+    const newTodos = todos.map((i) => {
+      if (i.id === id) {
+        return { ...i, isCompleted: !i.isCompleted };
+      }
+      return i;
+    });
+    setTodos(newTodos);
+  };
+
+  const deleteHandler = (id: TodoItemType["id"]) => {
+    const newTodos = todos.filter((i) => i.id !== id);
+    setTodos(newTodos);
+  };
+
+  const editHandler = (id: TodoItemType["id"], newVal: TodoItemType['title']) => {
+    const newTodos = todos.map((i) => {
+      if (i.id === id) {
+        return { ...i, title: newVal };
+      }
+      return i;
+    });
+    setTodos(newTodos);
+  };
+
+  useEffect(() => {
+    saveTodos(todos);
+  }, [todos]);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Container maxWidth="sm" sx={{ height: "100vh" }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography>Todo App</Typography>
+        </Toolbar>
+      </AppBar>
 
-export default App
+      <Stack height={"80%"} direction={"column"} spacing={"1rem"} p={"1rem"}>
+        {todos.map((i) => (
+          <TodoItem
+            key={i.id}
+            todo={i}
+            completeHandler={completeHandler}
+            deleteHandler={deleteHandler}
+            editHandler={editHandler}
+          />
+        ))}
+      </Stack>
+      <TextField
+        value={title}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+        fullWidth
+        label={"New Task"}
+      />
+      <Button
+        sx={{
+          margin: "1rem 0",
+        }}
+        fullWidth
+        variant="contained"
+        disabled={title === ""}
+        onClick={submitHandler}
+      >
+        ADD
+      </Button>
+    </Container>
+  );
+};
+
+export default App;
